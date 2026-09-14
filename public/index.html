@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>초성 퀴즈 — 표준국어대사전</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F5F0E3;
+    --paper-card:#FBF8F1;
+    --ink:#2A2620;
+    --ink-soft:#6B6255;
+    --line:#D9D0BC;
+    --seal:#B23A2E;
+    --seal-dark:#8C2C22;
+    --teal:#3E6259;
+    --focus:#2A5A8C;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    background-image:
+      repeating-linear-gradient(0deg, rgba(0,0,0,0.015) 0px, rgba(0,0,0,0.015) 1px, transparent 1px, transparent 3px);
+    color:var(--ink);
+    font-family:'Noto Sans KR', sans-serif;
+    min-height:100vh;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    padding:32px 16px 60px;
+  }
+  .page{ width:100%; max-width:560px; }
+
+  /* running header, like a dictionary page head */
+  .runhead{
+    display:flex; justify-content:space-between; align-items:baseline;
+    border-bottom:1.5px solid var(--ink);
+    padding-bottom:8px; margin-bottom:22px;
+  }
+  .runhead h1{
+    font-family:'Noto Serif KR', serif;
+    font-weight:700; font-size:20px; margin:0; letter-spacing:0.5px;
+  }
+  .runhead .meta{ font-size:12px; color:var(--ink-soft); font-family:'Noto Serif KR', serif; }
+
+  /* library checkout-card style stat strip */
+  .statcard{
+    display:grid; grid-template-columns:repeat(3,1fr);
+    border:1.3px solid var(--ink);
+    margin-bottom:20px;
+    background:var(--paper-card);
+  }
+  .statcard div{
+    padding:10px 8px; text-align:center;
+    border-right:1px solid var(--line);
+  }
+  .statcard div:last-child{ border-right:none; }
+  .statcard .label{
+    font-size:11px; color:var(--ink-soft); margin-bottom:4px;
+  }
+  .statcard .value{
+    font-family:'Noto Serif KR', serif; font-weight:700; font-size:22px;
+  }
+  .statcard .value.hearts{ color:var(--seal); letter-spacing:2px; font-size:16px; }
+
+  /* main card */
+  .card{
+    position:relative;
+    background:var(--paper-card);
+    border:1.3px solid var(--ink);
+    padding:28px 24px 26px;
+    min-height:300px;
+  }
+
+  .diffrow{ display:flex; gap:8px; margin-bottom:18px; flex-wrap:wrap; }
+  .diffbtn{
+    font-family:'Noto Sans KR', sans-serif; font-size:13px;
+    padding:6px 14px; border:1px solid var(--ink); background:transparent;
+    color:var(--ink); cursor:pointer; border-radius:0;
+  }
+  .diffbtn.active{ background:var(--ink); color:var(--paper-card); }
+  .diffbtn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+
+  .timerbar-wrap{
+    height:4px; background:var(--line); margin-bottom:22px; overflow:hidden;
+  }
+  .timerbar{
+    height:100%; background:var(--teal); width:100%;
+    transition:width 1s linear;
+  }
+  .timerbar.low{ background:var(--seal); }
+
+  .wordmeta{ font-size:12px; color:var(--ink-soft); margin-bottom:6px; }
+
+  .chosung{
+    font-family:'Noto Serif KR', serif; font-weight:700;
+    font-size:44px; letter-spacing:14px;
+    text-align:center; margin:6px 0 20px;
+    word-break:keep-all;
+  }
+
+  .definition{
+    font-family:'Noto Serif KR', serif; font-style:italic; font-size:15.5px;
+    line-height:1.65; color:var(--ink);
+    padding:14px 16px; background:rgba(0,0,0,0.02);
+    border-left:2.5px solid var(--teal);
+    margin-bottom:22px; min-height:52px;
+  }
+  .definition .pos{ font-style:normal; font-weight:700; color:var(--teal); margin-right:6px; }
+  .definition .src-note{ display:block; font-style:normal; font-size:11px; color:var(--ink-soft); margin-top:8px; }
+
+  .answer-row{ display:flex; gap:8px; margin-bottom:14px; }
+  .answer-row input{
+    flex:1; font-family:'Noto Sans KR', sans-serif; font-size:17px;
+    padding:10px 4px; border:none; border-bottom:2px solid var(--ink);
+    background:transparent; color:var(--ink);
+  }
+  .answer-row input:focus{ outline:none; border-bottom-color:var(--focus); }
+  .answer-row input:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+  .answer-row button{
+    font-family:'Noto Sans KR', sans-serif; font-weight:700; font-size:14px;
+    padding:0 18px; border:1.3px solid var(--ink); background:var(--ink); color:var(--paper-card);
+    cursor:pointer;
+  }
+  .answer-row button:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+  .answer-row button:disabled{ opacity:0.4; cursor:default; }
+
+  .toolrow{ display:flex; justify-content:space-between; align-items:center; }
+  .hintbtn{
+    background:none; border:none; color:var(--teal); font-size:13px;
+    text-decoration:underline; cursor:pointer; padding:2px 0;
+  }
+  .hintbtn:disabled{ color:var(--ink-soft); text-decoration:none; cursor:default; }
+  .feedback{ font-size:13px; min-height:18px; }
+  .feedback.ok{ color:var(--teal); font-weight:700; }
+  .feedback.bad{ color:var(--seal); font-weight:700; }
+
+  /* stamp */
+  .stamp{
+    position:absolute; top:26px; right:24px;
+    width:68px; height:68px; border-radius:50%;
+    border:3px solid var(--seal); color:var(--seal);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Noto Serif KR', serif; font-weight:700; font-size:16px;
+    transform:rotate(-14deg) scale(0.6); opacity:0;
+    pointer-events:none;
+  }
+  .stamp.show{
+    animation:stampin 0.35s ease-out forwards;
+  }
+  @keyframes stampin{
+    0%{ transform:rotate(-14deg) scale(1.8); opacity:0; }
+    60%{ transform:rotate(-14deg) scale(0.92); opacity:1; }
+    100%{ transform:rotate(-14deg) scale(1); opacity:1; }
+  }
+
+  .setup, .gameover{ text-align:center; padding:20px 4px; }
+  .setup p, .gameover p{ font-size:14px; color:var(--ink-soft); line-height:1.6; }
+  .bigbtn{
+    font-family:'Noto Sans KR', sans-serif; font-weight:700; font-size:15px;
+    padding:12px 28px; border:1.5px solid var(--ink); background:var(--ink); color:var(--paper-card);
+    cursor:pointer; margin-top:8px;
+  }
+  .bigbtn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+  .bigbtn.ghost{ background:transparent; color:var(--ink); }
+
+  .apibox{
+    margin-top:20px; padding-top:16px; border-top:1px dashed var(--line);
+    text-align:left;
+  }
+  .apibox label{ display:block; font-size:12px; color:var(--ink-soft); margin-bottom:6px; }
+  .apibox .row{ display:flex; gap:8px; align-items:center; }
+  .apibox input[type=text]{
+    flex:1; font-size:13px; padding:8px; border:1px solid var(--line); background:#fff;
+  }
+  .apibox .toggle{ font-size:12px; color:var(--ink-soft); margin-top:8px; }
+  .apibox .toggle a{ color:var(--teal); cursor:pointer; text-decoration:underline; }
+
+  .finalscore{ font-family:'Noto Serif KR', serif; font-weight:700; font-size:40px; margin:6px 0 2px; }
+
+  @media (max-width:420px){
+    .chosung{ font-size:34px; letter-spacing:9px; }
+    .card{ padding:22px 16px 20px; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .stamp.show{ animation:none; opacity:1; transform:rotate(-14deg) scale(1); }
+    .timerbar{ transition:none; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="runhead">
+    <h1>초성 퀴즈</h1>
+    <span class="meta">표준국어대사전 낱말 카드</span>
+  </div>
+
+  <div class="statcard">
+    <div><div class="label">점수</div><div class="value" id="statScore">0</div></div>
+    <div><div class="label">연속 정답</div><div class="value" id="statStreak">0</div></div>
+    <div><div class="label">남은 기회</div><div class="value hearts" id="statLives">♥ ♥ ♥</div></div>
+  </div>
+
+  <div class="card" id="card">
+    <!-- setup view -->
+    <div class="setup" id="view-setup">
+      <p>초성과 뜻풀이를 보고 낱말을 맞혀 보세요.<br>난이도를 고르고 시작하면 됩니다.</p>
+      <div class="diffrow" id="diffRow" style="justify-content:center;">
+        <button class="diffbtn active" data-diff="easy">쉬움</button>
+        <button class="diffbtn" data-diff="medium">보통</button>
+        <button class="diffbtn" data-diff="hard">어려움</button>
+        <button class="diffbtn" data-diff="all">전체</button>
+      </div>
+      <button class="bigbtn" id="startBtn">시작하기</button>
+
+      <div class="apibox">
+        <div class="toggle"><a id="toggleApi">표준국어대사전 API 키로 실제 사전 연동하기 ▾</a></div>
+        <div id="apiFields" style="display:none; margin-top:10px;">
+          <label for="proxyUrl">프록시 서버 주소 (배포용, 있으면 우선 사용)</label>
+          <div class="row">
+            <input type="text" id="proxyUrl" placeholder="예: https://내프록시서버.com" autocomplete="off">
+          </div>
+          <label for="apiKey" style="margin-top:10px;">또는 인증 키 직접 입력 (stdict.korean.go.kr 발급, 32자리)</label>
+          <div class="row">
+            <input type="text" id="apiKey" placeholder="예: 1a2b3c4d... " autocomplete="off">
+          </div>
+          <div class="toggle" style="margin-top:8px;">
+            프록시 서버 주소를 넣으면 그 서버를 통해 안전하게 뜻풀이를 가져옵니다. 인증 키를 직접 넣으면 브라우저가 사전 서버에 바로 요청하는데, 정부 API 서버가 이런 직접 호출(CORS)을 막아둔 경우 자동으로 기본 낱말 카드로 대체됩니다.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- play view -->
+    <div id="view-play" style="display:none;">
+      <div class="stamp" id="stamp">정답</div>
+      <div class="diffrow" id="playDiffLabel"></div>
+      <div class="timerbar-wrap"><div class="timerbar" id="timerbar"></div></div>
+      <div class="wordmeta" id="wordMeta">글자 수: -</div>
+      <div class="chosung" id="chosungDisplay">ㄱ ㅅ</div>
+      <div class="definition" id="definitionBox">뜻풀이를 불러오는 중…</div>
+      <div class="answer-row">
+        <input type="text" id="answerInput" placeholder="정답을 입력하세요" autocomplete="off">
+        <button id="submitBtn">확인</button>
+      </div>
+      <div class="toolrow">
+        <button class="hintbtn" id="hintBtn">힌트 보기 (첫 글자, −3점)</button>
+        <div class="feedback" id="feedback"></div>
+      </div>
+    </div>
+
+    <!-- game over view -->
+    <div class="gameover" id="view-over" style="display:none;">
+      <p style="margin-bottom:0;">최종 점수</p>
+      <div class="finalscore" id="finalScore">0</div>
+      <p id="overSummary"></p>
+      <button class="bigbtn" id="retryBtn">다시 시작</button>
+      <button class="bigbtn ghost" id="menuBtn">난이도 다시 고르기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  // ---------- word bank ----------
+  const BANK = {
+    easy: [
+      ["사전","낱말의 뜻과 쓰임을 풀이하여 모아 놓은 책"],
+      ["책상","앉아서 책을 읽거나 글을 쓸 때 쓰는 상"],
+      ["나무","줄기와 가지에 잎이 달려 자라는 식물"],
+      ["구름","하늘에 떠 있는 물방울이나 얼음 알갱이의 무리"],
+      ["편지","안부나 소식을 적어 보내는 글"],
+      ["거울","빛의 반사를 이용해 모습을 비추어 보는 물건"],
+      ["우산","비가 올 때 펴서 머리 위를 가리는 도구"],
+      ["시계","시간을 알려 주는 기계"],
+      ["학교","학생을 가르치는 교육 기관"],
+      ["바다","지구 표면의 넓고 짠물로 이루어진 곳"]
+    ],
+    medium: [
+      ["도서관","책을 모아 두고 사람들이 읽거나 빌려 갈 수 있게 한 곳"],
+      ["출판사","책을 만들어 펴내는 회사"],
+      ["이야기","어떤 사실이나 있음직한 일을 남에게 들려주는 말"],
+      ["무지개","비가 그친 뒤 하늘에 나타나는 일곱 빛깔의 둥근 띠"],
+      ["손수건","땀이나 물기를 닦기 위해 가지고 다니는 작은 천"],
+      ["자전거","두 바퀴를 발로 밟아 굴려서 타고 다니는 탈것"],
+      ["냉장고","음식을 차갑게 보관하는 전자 제품"],
+      ["인쇄소","글이나 그림을 종이에 찍어 내는 곳"],
+      ["원고지","글을 쓸 때 쓰는, 칸이 나뉜 종이"],
+      ["필사본","손으로 베껴 쓴 책이나 문서"]
+    ],
+    hard: [
+      ["등장인물","이야기나 연극에서 어떤 사건에 나오는 사람"],
+      ["다다익선","많으면 많을수록 더 좋다는 뜻의 말"],
+      ["우유부단","어물어물하며 결정을 잘 내리지 못하는 성격"],
+      ["유비무환","미리 준비가 되어 있으면 걱정할 것이 없다는 말"],
+      ["일석이조","한 가지 일로 두 가지 이익을 얻는다는 말"],
+      ["자수성가","물려받은 재산 없이 스스로 노력하여 성공함"],
+      ["청출어람","제자가 스승보다 나음을 이르는 말"],
+      ["표리부동","겉으로 드러난 언행과 속마음이 다름"],
+      ["십중팔구","거의 대부분, 열에 여덟이나 아홉 정도"],
+      ["파죽지세","대나무를 쪼개듯 거침없이 나아가는 기세"]
+    ]
+  };
+
+  const CHO = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+  function getChosung(str){
+    return [...str].map(ch=>{
+      const code = ch.charCodeAt(0) - 0xAC00;
+      if(code < 0 || code > 11171) return ch;
+      return CHO[Math.floor(code/588)];
+    }).join(' ');
+  }
+
+  // ---------- state ----------
+  let state = {
+    diff: 'easy',
+    pool: [],
+    used: [],
+    current: null, // {word, def, pos}
+    score: 0,
+    streak: 0,
+    lives: 3,
+    timer: 30,
+    timerId: null,
+    hintUsed: false,
+    answered: false,
+    apiKey: '',
+    proxyUrl: ''
+  };
+
+  // ---------- elements ----------
+  const el = id => document.getElementById(id);
+  const viewSetup = el('view-setup'), viewPlay = el('view-play'), viewOver = el('view-over');
+
+  el('toggleApi').addEventListener('click', ()=>{
+    const f = el('apiFields');
+    f.style.display = f.style.display === 'none' ? 'block' : 'none';
+  });
+
+  document.querySelectorAll('.diffbtn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.diffbtn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      state.diff = btn.dataset.diff;
+    });
+  });
+
+  el('startBtn').addEventListener('click', startGame);
+  el('retryBtn').addEventListener('click', ()=>{ resetStats(); startGame(); });
+  el('menuBtn').addEventListener('click', ()=>{
+    resetStats();
+    viewOver.style.display='none'; viewSetup.style.display='block';
+  });
+  el('submitBtn').addEventListener('click', submitAnswer);
+  el('answerInput').addEventListener('keydown', e=>{ if(e.key==='Enter') submitAnswer(); });
+  el('hintBtn').addEventListener('click', useHint);
+
+  function buildPool(){
+    if(state.diff === 'all'){
+      state.pool = [...BANK.easy, ...BANK.medium, ...BANK.hard];
+    } else {
+      state.pool = [...BANK[state.diff]];
+    }
+  }
+
+  function resetStats(){
+    state.score = 0; state.streak = 0; state.lives = 3; state.used = [];
+    updateStats();
+  }
+
+  function updateStats(){
+    el('statScore').textContent = state.score;
+    el('statStreak').textContent = state.streak;
+    el('statLives').textContent = '♥ '.repeat(state.lives).trim() || '—';
+  }
+
+  function startGame(){
+    state.apiKey = el('apiKey').value.trim();
+    state.proxyUrl = el('proxyUrl').value.trim().replace(/\/$/, '');
+    buildPool();
+    resetStats();
+    viewSetup.style.display='none'; viewOver.style.display='none'; viewPlay.style.display='block';
+    nextRound();
+  }
+
+  function pickWord(){
+    if(state.used.length >= state.pool.length) state.used = [];
+    let candidates = state.pool.filter((_,i)=>!state.used.includes(i));
+    let idx = state.pool.indexOf(candidates[Math.floor(Math.random()*candidates.length)]);
+    state.used.push(idx);
+    return state.pool[idx];
+  }
+
+  async function nextRound(){
+    state.answered = false;
+    state.hintUsed = false;
+    el('feedback').textContent = '';
+    el('feedback').className = 'feedback';
+    el('stamp').className = 'stamp';
+    el('answerInput').value = '';
+    el('answerInput').disabled = false;
+    el('submitBtn').disabled = false;
+    el('hintBtn').disabled = false;
+    el('hintBtn').textContent = '힌트 보기 (첫 글자, −3점)';
+    el('answerInput').focus();
+
+    const [word, localDef] = pickWord();
+    state.current = { word, def: localDef, pos: '' };
+
+    el('wordMeta').textContent = `글자 수: ${word.length}자`;
+    el('chosungDisplay').textContent = getChosung(word);
+    el('definitionBox').innerHTML = '뜻풀이를 불러오는 중…';
+
+    let fetched = false;
+    const sameOriginApi = (location.protocol !== 'file:');
+    if(sameOriginApi){
+      try{
+        const res = await fetch(`/api/define?word=${encodeURIComponent(word)}`);
+        if(res.ok){
+          const data = await res.json();
+          if(data.ok && data.definition){
+            state.current.def = data.definition;
+            state.current.pos = data.pos || '';
+            fetched = true;
+          }
+        }
+      }catch(err){
+        // same-origin API not available (e.g. plain static hosting) — fall through
+      }
+    }
+    if(!fetched && state.proxyUrl){
+      try{
+        const res = await fetch(`${state.proxyUrl}/api/define?word=${encodeURIComponent(word)}`);
+        if(!res.ok) throw new Error('bad response');
+        const data = await res.json();
+        if(data.ok && data.definition){
+          state.current.def = data.definition;
+          state.current.pos = data.pos || '';
+          fetched = true;
+        }
+      }catch(err){
+        // proxy unreachable — fall back to local definition
+      }
+    } else if(!fetched && state.apiKey){
+      try{
+        const url = `https://stdict.korean.go.kr/api/search.do?key=${encodeURIComponent(state.apiKey)}&q=${encodeURIComponent(word)}&req_type=json&num=1`;
+        const res = await fetch(url);
+        if(!res.ok) throw new Error('bad response');
+        const data = await res.json();
+        const item = data?.channel?.item?.[0];
+        const sense = item?.sense || item?.wordInfo?.senseInfo?.[0];
+        const posText = sense?.pos || '';
+        const defText = sense?.definition;
+        if(defText){
+          state.current.def = defText;
+          state.current.pos = posText;
+          fetched = true;
+        }
+      }catch(err){
+        // CORS or network failure — silently fall back to local definition
+      }
+    }
+    state.current.fetched = fetched;
+    renderDefinition();
+    startTimer();
+  }
+
+  function renderDefinition(hintChar){
+    const { def, pos } = state.current;
+    let html = '';
+    if(pos) html += `<span class="pos">「${pos}」</span>`;
+    html += def;
+    if(state.current.fetched){
+      html += `<span class="src-note">표준국어대사전 실시간 연동</span>`;
+    } else if(state.proxyUrl || state.apiKey){
+      html += `<span class="src-note">사전 연동 실패 — 기본 낱말 카드로 대체</span>`;
+    } else {
+      html += `<span class="src-note">미리 준비된 낱말 카드</span>`;
+    }
+    if(hintChar){
+      html = `<strong>${hintChar}◯…</strong><br>` + html;
+    }
+    el('definitionBox').innerHTML = html;
+  }
+
+  function startTimer(){
+    clearInterval(state.timerId);
+    state.timer = 30;
+    updateTimerBar();
+    state.timerId = setInterval(()=>{
+      state.timer--;
+      updateTimerBar();
+      if(state.timer <= 0){
+        clearInterval(state.timerId);
+        handleWrong(true);
+      }
+    }, 1000);
+  }
+  function updateTimerBar(){
+    const bar = el('timerbar');
+    const pct = Math.max(0, (state.timer/30)*100);
+    bar.style.width = pct + '%';
+    bar.className = 'timerbar' + (state.timer <= 8 ? ' low' : '');
+  }
+
+  function useHint(){
+    if(state.hintUsed || state.answered) return;
+    state.hintUsed = true;
+    el('hintBtn').disabled = true;
+    el('hintBtn').textContent = '힌트 사용함';
+    renderDefinition(state.current.word[0]);
+  }
+
+  function submitAnswer(){
+    if(state.answered) return;
+    const val = el('answerInput').value.trim();
+    if(!val) return;
+    if(val === state.current.word){
+      handleCorrect();
+    } else {
+      handleWrong(false);
+    }
+  }
+
+  function handleCorrect(){
+    state.answered = true;
+    clearInterval(state.timerId);
+    let points = state.diff === 'hard' ? 15 : state.diff === 'medium' ? 10 : 6;
+    if(state.diff === 'all') points = 10;
+    if(state.hintUsed) points = Math.max(1, points - 3);
+    state.score += points;
+    state.streak += 1;
+    updateStats();
+    el('feedback').textContent = `정답! +${points}점`;
+    el('feedback').className = 'feedback ok';
+    el('answerInput').disabled = true;
+    el('submitBtn').disabled = true;
+    el('hintBtn').disabled = true;
+    el('stamp').className = 'stamp show';
+    setTimeout(nextRound, 1200);
+  }
+
+  function handleWrong(timedOut){
+    state.answered = true;
+    clearInterval(state.timerId);
+    state.streak = 0;
+    state.lives -= 1;
+    updateStats();
+    el('feedback').textContent = (timedOut ? '시간 종료! ' : '오답! ') + `정답은 "${state.current.word}"`;
+    el('feedback').className = 'feedback bad';
+    el('answerInput').disabled = true;
+    el('submitBtn').disabled = true;
+    el('hintBtn').disabled = true;
+    if(state.lives <= 0){
+      setTimeout(showGameOver, 1300);
+    } else {
+      setTimeout(nextRound, 1300);
+    }
+  }
+
+  function showGameOver(){
+    viewPlay.style.display = 'none';
+    viewOver.style.display = 'block';
+    el('finalScore').textContent = state.score;
+    el('overSummary').textContent = `최고 연속 정답을 다시 노려 보세요.`;
+  }
+})();
+</script>
+</body>
+</html>
