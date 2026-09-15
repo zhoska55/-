@@ -3,27 +3,25 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>초성 퀴즈 — 표준국어대사전</title>
+<title>초성 퀴즈 — 당신의 우리말 실력은?</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root{
     --paper:#F5F0E3;
-    --paper-card:#FBF8F1;
+    --paper-card:#FFFDF8;
     --ink:#2A2620;
     --ink-soft:#6B6255;
-    --line:#D9D0BC;
-    --seal:#B23A2E;
-    --seal-dark:#8C2C22;
-    --teal:#3E6259;
-    --focus:#2A5A8C;
+    --line:#E9DEDF;
+    --seal:#E8365F;
+    --seal-dark:#B81F45;
+    --teal:#00A99D;
+    --focus:#3D6BFF;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
   body{
-    background:var(--paper);
-    background-image:
-      repeating-linear-gradient(0deg, rgba(0,0,0,0.015) 0px, rgba(0,0,0,0.015) 1px, transparent 1px, transparent 3px);
+    background: linear-gradient(135deg, #4B2E83 0%, #A83E8C 45%, #FF7A59 100%);
     color:var(--ink);
     font-family:'Noto Sans KR', sans-serif;
     min-height:100vh;
@@ -31,20 +29,45 @@
     align-items:flex-start;
     justify-content:center;
     padding:32px 16px 60px;
+    position:relative;
+    overflow-x:hidden;
   }
+  body::before, body::after{
+    content:'';
+    position:fixed;
+    border-radius:50%;
+    filter:blur(50px);
+    z-index:0;
+    pointer-events:none;
+  }
+  body::before{
+    width:280px; height:280px;
+    background:#FFD166;
+    top:-60px; left:-60px;
+    opacity:0.55;
+  }
+  body::after{
+    width:320px; height:320px;
+    background:#00D9C0;
+    bottom:-80px; right:-60px;
+    opacity:0.4;
+  }
+  .page{ position:relative; z-index:1; }
   .page{ width:100%; max-width:560px; }
 
   /* running header, like a dictionary page head */
   .runhead{
     display:flex; justify-content:space-between; align-items:baseline;
-    border-bottom:1.5px solid var(--ink);
+    border-bottom:1.5px solid rgba(255,255,255,0.55);
     padding-bottom:8px; margin-bottom:22px;
   }
   .runhead h1{
     font-family:'Noto Serif KR', serif;
-    font-weight:700; font-size:20px; margin:0; letter-spacing:0.5px;
+    font-weight:700; font-size:21px; margin:0; letter-spacing:0.3px;
+    color:#FFFBF3;
+    text-shadow:0 2px 10px rgba(0,0,0,0.35);
   }
-  .runhead .meta{ font-size:12px; color:var(--ink-soft); font-family:'Noto Serif KR', serif; }
+  .runhead .meta{ font-size:12px; color:rgba(255,255,255,0.85); font-family:'Noto Serif KR', serif; }
 
   /* library checkout-card style stat strip */
   .statcard{
@@ -157,6 +180,19 @@
     100%{ transform:rotate(-14deg) scale(1); opacity:1; }
   }
 
+  .confetti-piece{
+    position:absolute; top:42%; font-size:22px;
+    pointer-events:none; z-index:5;
+    animation: confettiFall 0.8s ease-out forwards;
+  }
+  @keyframes confettiFall{
+    0%{ transform:translate(0,0) rotate(0deg) scale(1); opacity:1; }
+    100%{ transform:translate(var(--dx), 130px) rotate(var(--rot)) scale(0.8); opacity:0; }
+  }
+  .streak-badge{
+    display:inline-block; margin-left:6px; font-weight:700;
+  }
+
   .setup, .gameover{ text-align:center; padding:20px 4px; }
   .setup p, .gameover p{ font-size:14px; color:var(--ink-soft); line-height:1.6; }
   .bigbtn{
@@ -194,7 +230,7 @@
 <body>
 <div class="page">
   <div class="runhead">
-    <h1>초성 퀴즈</h1>
+    <h1>🧩 초성 퀴즈 — 당신의 우리말 실력은?</h1>
     <span class="meta">표준국어대사전 낱말 카드</span>
   </div>
 
@@ -215,23 +251,6 @@
         <button class="diffbtn" data-diff="all">전체</button>
       </div>
       <button class="bigbtn" id="startBtn">시작하기</button>
-
-      <div class="apibox">
-        <div class="toggle"><a id="toggleApi">표준국어대사전 API 키로 실제 사전 연동하기 ▾</a></div>
-        <div id="apiFields" style="display:none; margin-top:10px;">
-          <label for="proxyUrl">프록시 서버 주소 (배포용, 있으면 우선 사용)</label>
-          <div class="row">
-            <input type="text" id="proxyUrl" placeholder="예: https://내프록시서버.com" autocomplete="off">
-          </div>
-          <label for="apiKey" style="margin-top:10px;">또는 인증 키 직접 입력 (stdict.korean.go.kr 발급, 32자리)</label>
-          <div class="row">
-            <input type="text" id="apiKey" placeholder="예: 1a2b3c4d... " autocomplete="off">
-          </div>
-          <div class="toggle" style="margin-top:8px;">
-            프록시 서버 주소를 넣으면 그 서버를 통해 안전하게 뜻풀이를 가져옵니다. 인증 키를 직접 넣으면 브라우저가 사전 서버에 바로 요청하는데, 정부 API 서버가 이런 직접 호출(CORS)을 막아둔 경우 자동으로 기본 낱말 카드로 대체됩니다.
-          </div>
-        </div>
-      </div>
     </div>
 
     <!-- play view -->
@@ -277,7 +296,71 @@
       ["우산","비가 올 때 펴서 머리 위를 가리는 도구"],
       ["시계","시간을 알려 주는 기계"],
       ["학교","학생을 가르치는 교육 기관"],
-      ["바다","지구 표면의 넓고 짠물로 이루어진 곳"]
+      ["바다","지구 표면의 넓고 짠물로 이루어진 곳"],
+      ["우유","소에게서 짜낸, 흰색의 마시는 액체"],
+      ["안경","눈이 잘 안 보일 때 코에 걸쳐 쓰는 기구"],
+      ["지갑","돈이나 카드를 넣어 다니는 작은 가방"],
+      ["모자","머리에 쓰는 물건"],
+      ["신발","발에 신는 물건"],
+      ["식탁","음식을 차려 놓고 먹는 상"],
+      ["창문","방에 빛이나 바람이 드나들게 낸 문"],
+      ["의자","걸터앉는 데 쓰는 가구"],
+      ["열쇠","자물쇠를 잠그거나 여는 데 쓰는 도구"],
+      ["계단","오르내리기 위해 높이가 다른 층을 잇는 구조물"],
+      ["기차","철길 위를 달리는 큰 탈것"],
+      ["병원","아픈 사람을 진찰하고 치료하는 곳"],
+      ["약국","약을 짓거나 파는 곳"],
+      ["공원","사람들이 쉬거나 놀 수 있게 꾸며 놓은 넓은 곳"],
+      ["식당","음식을 만들어 파는 가게"],
+      ["은행","돈을 맡기거나 빌리는 일을 하는 곳"],
+      ["극장","영화나 연극을 보여 주는 곳"],
+      ["시장","물건을 사고파는 사람들이 모이는 곳"],
+      ["사과","빨갛거나 노랗게 익는, 새콤달콤한 과일"],
+      ["배추","김치를 담글 때 많이 쓰는 잎채소"],
+      ["감자","땅속에서 자라는 둥근 뿌리채소"],
+      ["당근","주황색의 길쭉한 뿌리채소"],
+      ["딸기","붉고 씨가 겉에 박힌 작은 과일"],
+      ["포도","알알이 송이를 이루어 자라는 과일"],
+      ["참외","노란 껍질에 단맛이 나는 여름 과일"],
+      ["수박","껍질은 초록색, 속은 붉은 큰 여름 과일"],
+      ["라면","국물에 넣어 끓여 먹는 즉석 면 요리"],
+      ["김밥","밥과 재료를 김에 말아 싼 음식"],
+      ["떡국","가래떡을 썰어 넣고 끓인 국"],
+      ["냉면","차갑게 먹는 메밀 국수"],
+      ["튀김","재료에 옷을 입혀 기름에 튀긴 음식"],
+      ["김치","배추나 무를 소금에 절여 양념해 담근 반찬"],
+      ["두부","콩을 갈아 굳혀 만든 하얀 음식"],
+      ["참새","몸집이 작고 갈색을 띤 흔한 새"],
+      ["까치","검은색과 흰색 깃털을 가진 새"],
+      ["토끼","귀가 길고 뒷다리가 발달한 동물"],
+      ["사슴","뿔이 나고 다리가 가느다란 초식 동물"],
+      ["여우","꼬리가 길고 영리한 야생 동물"],
+      ["거북","등에 딱딱한 등딱지를 진 파충류"],
+      ["나비","날개가 화려한, 꽃 사이를 날아다니는 곤충"],
+      ["개미","줄지어 다니는 작은 곤충"],
+      ["매미","여름에 시끄럽게 우는 곤충"],
+      ["하늘","땅 위로 끝없이 펼쳐진 공간"],
+      ["바람","공기가 움직여 흐르는 것"],
+      ["눈물","슬프거나 기쁠 때 눈에서 흐르는 물"],
+      ["웃음","기쁘거나 재미있을 때 나오는 표정이나 소리"],
+      ["노래","가락에 맞추어 부르는 말"],
+      ["그림","선이나 색으로 사물을 나타낸 것"],
+      ["사진","카메라로 찍어 남긴 모습"],
+      ["음악","소리로 감정이나 생각을 표현하는 예술"],
+      ["운동","몸을 움직여 건강을 다지는 활동"],
+      ["휴식","잠시 쉬는 일"],
+      ["여행","다른 곳을 두루 돌아다니는 일"],
+      ["약속","앞으로 할 일을 미리 정해 두는 것"],
+      ["친구","가깝게 오래 사귄 사람"],
+      ["가족","부모와 자식처럼 한집에서 함께 사는 사람들"],
+      ["이웃","가까이 사는 사람"],
+      ["선물","남에게 주는 물건"],
+      ["축제","여러 사람이 모여 즐기는 큰 행사"],
+      ["호수","육지 안쪽에 물이 고여 있는 넓은 곳"],
+      ["장갑","손을 따뜻하게 하거나 보호하려고 손에 끼는 것"],
+      ["우표","편지에 붙여 요금을 냈음을 나타내는 작은 종이"],
+      ["지도","땅의 모습을 일정한 형식으로 줄여 나타낸 그림"],
+      ["구두","가죽으로 만들어 발에 신는 신발의 한 종류"]
     ],
     medium: [
       ["도서관","책을 모아 두고 사람들이 읽거나 빌려 갈 수 있게 한 곳"],
@@ -289,7 +372,63 @@
       ["냉장고","음식을 차갑게 보관하는 전자 제품"],
       ["인쇄소","글이나 그림을 종이에 찍어 내는 곳"],
       ["원고지","글을 쓸 때 쓰는, 칸이 나뉜 종이"],
-      ["필사본","손으로 베껴 쓴 책이나 문서"]
+      ["필사본","손으로 베껴 쓴 책이나 문서"],
+      ["우체국","편지나 소포를 부치는 일을 맡아보는 곳"],
+      ["강아지","개의 새끼, 또는 작은 개를 귀엽게 이르는 말"],
+      ["고양이","몸집이 작고 날쌘, 사람이 많이 기르는 동물"],
+      ["놀이터","아이들이 놀 수 있게 여러 놀이기구를 갖춘 곳"],
+      ["미용실","머리를 다듬거나 손질해 주는 가게"],
+      ["세탁기","옷을 물에 넣고 빨아 주는 전자 제품"],
+      ["청소기","먼지나 쓰레기를 빨아들여 청소하는 기계"],
+      ["운동장","여러 사람이 모여 운동이나 경기를 할 수 있는 넓은 땅"],
+      ["정류장","버스나 택시 등이 사람을 태우거나 내리려고 머무르는 곳"],
+      ["편의점","늦게까지 문을 열고 생활용품을 파는 작은 가게"],
+      ["도시락","밥과 반찬을 담아 가지고 다니는 그릇, 또는 그 음식"],
+      ["목걸이","목에 거는 장신구"],
+      ["유리창","유리를 낀 창문"],
+      ["눈사람","눈을 뭉쳐서 사람 모양으로 만든 것"],
+      ["무궁화","우리나라를 상징하는 꽃"],
+      ["우체통","편지를 넣으면 모아 가는 통"],
+      ["신호등","색깔로 차나 사람이 멈추거나 갈 때를 알려 주는 장치"],
+      ["자동차","엔진의 힘으로 움직이는, 사람이나 짐을 실어 나르는 탈것"],
+      ["비행기","하늘을 날아 사람이나 짐을 실어 나르는 탈것"],
+      ["온도계","온도를 재는 기구"],
+      ["백화점","여러 가지 상품을 한 건물 안에서 파는 큰 상점"],
+      ["지하철","땅 밑으로 다니는 철도, 또는 그 기차"],
+      ["비빔밥","밥에 여러 나물과 고추장을 넣어 비벼 먹는 음식"],
+      ["떡볶이","떡을 고추장 양념에 볶은 음식"],
+      ["삼겹살","돼지의 배 부분 살코기, 구워서 많이 먹는 고기"],
+      ["부침개","반죽에 재료를 넣어 기름에 부쳐 낸 음식"],
+      ["잠자리","몸이 가늘고 날개가 넓은, 여름에 흔한 곤충"],
+      ["다람쥐","꼬리가 길고 나무를 잘 타는 작은 동물"],
+      ["코끼리","긴 코와 큰 귀를 가진 몸집이 아주 큰 동물"],
+      ["호랑이","몸에 줄무늬가 있는 사나운 큰 고양잇과 동물"],
+      ["원숭이","사람과 닮은 얼굴에 나무를 잘 타는 동물"],
+      ["병아리","갓 태어난 닭의 새끼"],
+      ["올챙이","개구리가 되기 전의 새끼"],
+      ["잠수함","물속에서 다닐 수 있게 만든 배"],
+      ["우주선","우주를 다닐 수 있게 만든 탈것"],
+      ["비상구","위급할 때 빠져나갈 수 있게 마련한 출구"],
+      ["소방차","불을 끄러 갈 때 타는 특수한 자동차"],
+      ["구급차","다치거나 아픈 사람을 빨리 실어 나르는 자동차"],
+      ["경찰서","경찰이 일을 보는 관청"],
+      ["소방서","불을 끄는 일을 맡아보는 기관"],
+      ["우체부","편지나 소포를 배달하는 사람"],
+      ["간호사","의사를 도와 환자를 돌보는 사람"],
+      ["요리사","음식을 만드는 일을 직업으로 하는 사람"],
+      ["선생님","학생을 가르치는 사람을 높여 이르는 말"],
+      ["대통령","나라를 대표하는 가장 높은 자리에 있는 사람"],
+      ["과학자","과학을 연구하는 일을 하는 사람"],
+      ["음악가","음악을 만들거나 연주하는 일을 하는 사람"],
+      ["사업가","사업을 하는 사람"],
+      ["운전사","차를 모는 일을 직업으로 하는 사람"],
+      ["신문지","신문에 쓰는 종이, 또는 다 읽은 신문"],
+      ["그림책","그림이 많이 들어간 어린이용 책"],
+      ["동화책","어린이를 위해 지은 이야기책"],
+      ["만화책","그림으로 이야기를 나타낸 책"],
+      ["지우개","연필로 쓴 글씨를 지우는 도구"],
+      ["색연필","여러 색깔로 칠할 수 있게 만든 연필"],
+      ["가로등","길을 밝히기 위해 세운 등"]
     ],
     hard: [
       ["등장인물","이야기나 연극에서 어떤 사건에 나오는 사람"],
@@ -301,7 +440,57 @@
       ["청출어람","제자가 스승보다 나음을 이르는 말"],
       ["표리부동","겉으로 드러난 언행과 속마음이 다름"],
       ["십중팔구","거의 대부분, 열에 여덟이나 아홉 정도"],
-      ["파죽지세","대나무를 쪼개듯 거침없이 나아가는 기세"]
+      ["파죽지세","대나무를 쪼개듯 거침없이 나아가는 기세"],
+      ["금상첨화","좋은 일에 더 좋은 일이 겹침"],
+      ["동상이몽","겉으로는 같이 행동하면서 속으로는 서로 다른 생각을 함"],
+      ["사면초가","사방이 다 적으로 둘러싸인, 아무 도움도 받을 수 없는 상황"],
+      ["새옹지마","좋은 일이 나쁜 일이 되기도, 나쁜 일이 좋은 일이 되기도 함을 이르는 말"],
+      ["오리무중","무슨 일에 대하여 방향이나 상황을 전혀 알 수 없음"],
+      ["전화위복","좋지 않은 일이 오히려 좋은 일로 바뀜"],
+      ["죽마고우","어릴 때부터 같이 놀며 자란 친한 친구"],
+      ["청천벽력","뜻밖에 일어난 큰 사건이나 재앙"],
+      ["칠전팔기","여러 번 실패해도 굽히지 않고 계속 노력함"],
+      ["타산지석","남의 하찮은 언행도 자신을 갈고닦는 데 도움이 될 수 있음"],
+      ["형설지공","어려운 환경에서도 꾸준히 노력하여 얻은 성과"],
+      ["화룡점정","무슨 일을 하는 데 가장 중요한 부분을 마쳐 완성시킴"],
+      ["팔방미인","여러 방면에 능력이 있는 사람"],
+      ["동문서답","물음과 전혀 상관없는 엉뚱한 대답"],
+      ["이심전심","말을 하지 않아도 서로 마음이 통함"],
+      ["자업자득","자기가 저지른 일의 결과를 자기가 받음"],
+      ["고진감래","힘든 일이 지나면 좋은 일이 옴"],
+      ["언행일치","말과 행동이 서로 같음"],
+      ["감언이설","남의 비위를 맞추거나 속이려고 듣기 좋게 하는 말"],
+      ["개과천선","지난날의 잘못을 뉘우치고 착하게 됨"],
+      ["견물생심","물건을 보면 갖고 싶은 욕심이 생김"],
+      ["결자해지","일을 벌인 사람이 그 일을 해결해야 함"],
+      ["고육지책","어려운 상황을 벗어나기 위해 어쩔 수 없이 쓰는 방법"],
+      ["과유불급","지나친 것은 모자란 것과 같음"],
+      ["권선징악","착한 일을 권하고 나쁜 일을 벌함"],
+      ["근묵자흑","나쁜 사람과 가까이하면 물들기 쉬움"],
+      ["금시초문","이제야 비로소 처음 들음"],
+      ["기고만장","일이 뜻대로 잘될 때 기세가 몹시 등등함"],
+      ["낭중지추","재능이 뛰어난 사람은 저절로 드러남"],
+      ["노심초사","몹시 마음을 쓰며 애를 태움"],
+      ["다재다능","여러 방면에 재주와 능력이 많음"],
+      ["대기만성","크게 될 사람은 늦게 이루어짐"],
+      ["동병상련","같은 처지에 있는 사람끼리 서로 가엾게 여김"],
+      ["마이동풍","남의 말을 귀담아듣지 않고 흘려버림"],
+      ["명불허전","이름이 널리 알려진 데는 그럴 만한 까닭이 있음"],
+      ["목불인견","눈앞의 참혹한 상황을 차마 볼 수 없음"],
+      ["반신반의","어느 정도 믿으면서도 한편으로는 의심함"],
+      ["백년해로","부부가 화목하게 함께 늙음"],
+      ["부화뇌동","자기 생각 없이 남이 하는 대로 따라감"],
+      ["사필귀정","모든 일은 결국 바른길로 돌아감"],
+      ["설상가상","어려운 일이 겹쳐서 일어남"],
+      ["소탐대실","작은 것을 탐내다가 큰 것을 잃음"],
+      ["수수방관","간섭하지 않고 그대로 내버려둠"],
+      ["심사숙고","깊이 잘 생각함"],
+      ["아전인수","자기에게만 이롭게 생각하거나 행동함"],
+      ["어부지리","둘이 다투는 사이에 다른 사람이 이익을 가로챔"],
+      ["우여곡절","뜻밖의 여러 가지 복잡한 사정"],
+      ["유유상종","비슷한 사람끼리 서로 사귐"],
+      ["인과응보","원인에 따라 그에 맞는 결과가 있음"],
+      ["자화자찬","자기가 한 일을 스스로 자랑함"]
     ]
   };
 
@@ -312,6 +501,38 @@
       if(code < 0 || code > 11171) return ch;
       return CHO[Math.floor(code/588)];
     }).join(' ');
+  }
+
+  const FUN_MESSAGES = [
+    '딱 맞혔어요!','사전 뺨치는 실력!','낱말 센스 물올랐네요!','완벽한 정답!',
+    '눈 감고도 맞히시나요?','우와, 정확해요!','낱말 헌터 등극!','정답 적중!',
+    '보기 좋게 맞히셨어요!','낱말 박사님이시네요!','감이 예술이에요!',
+    '흠잡을 데 없는 정답!','이 정도면 사전 편집자!','명쾌한 정답!'
+  ];
+  function getStreakBadge(streak){
+    const map = {
+      3:'🔥 3연속!',
+      5:'🔥🔥 5연속, 불타오르네요',
+      10:'🏆 10연속! 국어의 신',
+      15:'👑 15연속! 전설이 되셨어요',
+      20:'🌌 20연속! 이건 반칙 아닌가요'
+    };
+    return map[streak] || null;
+  }
+  function confettiBurst(){
+    const card = el('card');
+    const emojis = ['🎉','✨','📖','🌟','👏'];
+    for(let i=0;i<10;i++){
+      const span = document.createElement('span');
+      span.className = 'confetti-piece';
+      span.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+      span.style.left = (50 + (Math.random()*40-20)) + '%';
+      span.style.animationDelay = (Math.random()*0.15) + 's';
+      span.style.setProperty('--dx', (Math.random()*160-80) + 'px');
+      span.style.setProperty('--rot', (Math.random()*360-180) + 'deg');
+      card.appendChild(span);
+      setTimeout(()=>span.remove(), 900);
+    }
   }
 
   // ---------- state ----------
@@ -334,11 +555,6 @@
   // ---------- elements ----------
   const el = id => document.getElementById(id);
   const viewSetup = el('view-setup'), viewPlay = el('view-play'), viewOver = el('view-over');
-
-  el('toggleApi').addEventListener('click', ()=>{
-    const f = el('apiFields');
-    f.style.display = f.style.display === 'none' ? 'block' : 'none';
-  });
 
   document.querySelectorAll('.diffbtn').forEach(btn=>{
     btn.addEventListener('click', ()=>{
@@ -378,8 +594,6 @@
   }
 
   function startGame(){
-    state.apiKey = el('apiKey').value.trim();
-    state.proxyUrl = el('proxyUrl').value.trim().replace(/\/$/, '');
     buildPool();
     resetStats();
     viewSetup.style.display='none'; viewOver.style.display='none'; viewPlay.style.display='block';
@@ -534,12 +748,15 @@
     state.score += points;
     state.streak += 1;
     updateStats();
-    el('feedback').textContent = `정답! +${points}점`;
+    const msg = FUN_MESSAGES[Math.floor(Math.random()*FUN_MESSAGES.length)];
+    const badge = getStreakBadge(state.streak);
+    el('feedback').innerHTML = `${msg} +${points}점` + (badge ? `<span class="streak-badge">${badge}</span>` : '');
     el('feedback').className = 'feedback ok';
     el('answerInput').disabled = true;
     el('submitBtn').disabled = true;
     el('hintBtn').disabled = true;
     el('stamp').className = 'stamp show';
+    confettiBurst();
     setTimeout(nextRound, 1200);
   }
 
