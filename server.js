@@ -69,6 +69,21 @@ app.get('/api/define', async (req, res) => {
   }
 });
 
+// 구글 플레이 앱 연결(주소창 숨김)용
+app.get('/.well-known/assetlinks.json', (req, res) => {
+  res.json([{
+    relation: ['delegate_permission/common.handle_all_urls'],
+    target: {
+      namespace: 'android_app',
+      package_name: 'com.zhoska.korean_chosung_quiz',
+      sha256_cert_fingerprints: [
+        '92:39:99:4B:C9:FB:CB:E3:6C:37:63:99:5D:3D:F0:35:D2:A2:99:5B:23:E8:13:50:F0:3B:E7:E9:49:9D:97:95',
+        'B4:3D:91:43:52:39:DC:82:3E:3A:0B:83:D4:61:66:01:72:E5:C3:2A:F5:50:55:36:76:42:28:AB:A4:F0:78:36'
+      ]
+    }
+  }]);
+});
+
 app.get('/health', (req, res) => res.json({ ok: true }));
 
 app.listen(PORT, () => {
