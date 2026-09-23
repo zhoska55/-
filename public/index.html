@@ -231,6 +231,12 @@
 
   .finalscore{ font-family:'Noto Serif KR', serif; font-weight:700; font-size:40px; margin:6px 0 2px; }
 
+  .best-badge{
+    display:inline-block; font-size:13px; font-weight:700;
+    color:var(--seal-dark); background:rgba(232,54,95,0.08);
+    padding:4px 12px; margin-bottom:10px;
+  }
+
   .credit{
     text-align:center; margin-top:16px; font-size:11px;
     color:rgba(255,255,255,0.75);
@@ -296,9 +302,11 @@
     <div class="gameover" id="view-over" style="display:none;">
       <p style="margin-bottom:0;">최종 점수</p>
       <div class="finalscore" id="finalScore">0</div>
+      <div class="best-badge" id="bestBadge" style="display:none;"></div>
       <p id="overSummary"></p>
       <button class="bigbtn" id="retryBtn">다시 시작</button>
       <button class="bigbtn ghost" id="menuBtn">난이도 다시 고르기</button>
+      <button class="bigbtn ghost" id="shareBtn">결과 공유하기</button>
     </div>
   </div>
   <div class="credit">이 게임은 국립국어원 우리말샘, 국립국어원 한국어 학습용 어휘 목록의 자료를 활용합니다</div>
@@ -3710,6 +3718,7 @@
   el('submitBtn').addEventListener('click', submitAnswer);
   el('answerInput').addEventListener('keydown', e=>{ if(e.key==='Enter') submitAnswer(); });
   el('hintBtn').addEventListener('click', useHint);
+  el('shareBtn').addEventListener('click', shareResult);
 
   function buildPool(){
     if(state.diff === 'all'){
@@ -3907,6 +3916,7 @@
     el('hintBtn').disabled = true;
     el('stamp').className = 'stamp show';
     confettiBurst();
+    if(navigator.vibrate){ navigator.vibrate(50); }
     if(state.questionIndex >= state.totalQuestions){
       setTimeout(showGameOver, 1300);
     } else {
@@ -3945,6 +3955,21 @@
     viewOver.style.display = 'block';
     el('progressLine').style.display = 'none';
     el('finalScore').textContent = state.score;
+
+    const badgeEl = el('bestBadge');
+    let best = 0;
+    try{ best = parseInt(localStorage.getItem('chosungBestScore')||'0',10) || 0; }catch(e){}
+    if(state.score > best){
+      try{ localStorage.setItem('chosungBestScore', String(state.score)); }catch(e){}
+      badgeEl.textContent = '🏆 최고 기록 경신!';
+      badgeEl.style.display = 'inline-block';
+    } else if(best > 0){
+      badgeEl.textContent = `최고 기록 ${best}점`;
+      badgeEl.style.display = 'inline-block';
+    } else {
+      badgeEl.style.display = 'none';
+    }
+
     const attempted = state.questionIndex;
     const accuracyPct = attempted ? Math.round((state.correctCount/attempted)*100) : 0;
     let summary = `총 ${attempted}문항 중 <strong>${state.correctCount}개 정답</strong> (정답률 ${accuracyPct}%)`;
@@ -3956,6 +3981,21 @@
     el('overSummary').innerHTML = summary;
     if(accuracyPct >= 80 && attempted >= 5){
       fireworksBurst();
+    }
+  }
+
+  function shareResult(){
+    const text = `우리말 초성 퀴즈에서 ${state.questionIndex}문항 중 ${state.correctCount}개 정답(점수 ${state.score}점)을 맞혔어요! 도전해보세요 🧩`;
+    const url = location.origin;
+    if(navigator.share){
+      navigator.share({ title: '우리말 초성 퀴즈', text, url }).catch(()=>{});
+    } else if(navigator.clipboard){
+      navigator.clipboard.writeText(`${text}\n${url}`).then(()=>{
+        const btn = el('shareBtn');
+        const original = btn.textContent;
+        btn.textContent = '결과가 복사됐어요!';
+        setTimeout(()=>{ btn.textContent = original; }, 2000);
+      }).catch(()=>{});
     }
   }
 })();
