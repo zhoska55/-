@@ -1,7 +1,7 @@
 {
   "name": "우리말 초성 퀴즈",
   "short_name": "우리말 초성퀴즈",
-  "description": "표준국어대사전과 실시간 연동되는 초성 낱말 맞히기 게임",
+  "description": "표준국어대사전·우리말샘 뜻풀이로 즐기는 초성 낱말 맞히기 게임",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
