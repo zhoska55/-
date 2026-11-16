@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.zhoska.korean_chosung_quiz",
+      "sha256_cert_fingerprints": [
+        "B3:65:51:BF:12:B4:FD:CA:1A:24:C5:A0:71:48:EF:55:51:93:78:60:F4:24:20:79:4F:84:40:64:75:7F:71:7A"
+      ]
+    }
+  }
+]
