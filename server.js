@@ -21,6 +21,13 @@ app.use(cors({ origin: ALLOWED_ORIGIN }));
 
 // public 폴더 안의 게임 화면(index.html)을 그대로 서빙한다.
 // 배포 후에는 이 서버 주소 하나만 열면 게임과 사전 연동이 모두 된다.
+// 안드로이드 앱(TWA)과 이 사이트를 연결하는 인증 파일 (구글 Digital Asset Links).
+// 이 파일이 있어야 앱 위쪽의 주소창이 사라지고 전체 화면으로 열린다.
+app.get('/.well-known/assetlinks.json', (req, res) => {
+  res.type('application/json');
+  res.sendFile(path.join(__dirname, 'public', 'assetlinks.json'));
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 // 아주 단순한 메모리 캐시 (같은 단어 반복 조회 시 사전 서버 호출을 줄여 준다)
